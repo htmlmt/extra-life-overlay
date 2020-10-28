@@ -1,15 +1,7 @@
 <template>
     <div class="dd-u-flex dd-u-flex-col dd-u-h-screen dd-u-justify-between">
         <main class="u-p-sm u-shadow dd-u-bg-white dd-u-relative dd-u-z-10">
-            <Thermo
-                v-if="team.sumDonations"
-                :resource="team"
-            />
-            
-            <Thermo
-                v-if="!team.sumDonations"
-                :resource="participant"
-            />
+            <Thermo :resource="resource" />
         </main>
         
         <footer class="u-p-sm dd-u-flex dd-u-items-center dd-u-justify-between dd-u-overflow-hidden">
@@ -19,15 +11,8 @@
             >
                 <div class="u-mr-16">
                     <img
-                        v-if="team.name"
-                        :alt="team.name"
-                        :src="team.avatarImageURL"
-                    >
-                    
-                    <img
-                        v-if="!team.name"
-                        :alt="participant.displayName"
-                        :src="participant.avatarImageURL"
+                        :alt="name"
+                        :src="avatarImageURL"
                     >
                 </div>
                 
@@ -67,7 +52,10 @@ export default {
     },
     data() {
         return {
+            avatarImageURL: '',
             lastDonationTime: false,
+            name: '',
+            resource: {},
             thermoShown: 'team',
         }
     },
@@ -92,6 +80,12 @@ export default {
                         teamID: participant.teamID,
                     });
                 }, 15000);
+                
+                if (this.$route.query.view === 'participant') {
+                    this.avatarImageURL = this.participant.avatarImageURL;
+                    this.name = this.participant.displayName;
+                    this.resource = this.participant;
+                }
             } else {
                 clearInterval(lastDonationInterval);
                 
@@ -104,20 +98,42 @@ export default {
                         participantID: participant.participantID,
                     });
                 }, 15000);
+                
+                this.avatarImageURL = this.participant.avatarImageURL;
+                this.name = this.participant.displayName;
+                this.resource = this.participant;
             }
         },
         team: function(team) {
             clearInterval(lastDonationInterval);
             
-            store.dispatch('getLastDonation', {
-                teamID: team.teamID,
-            });
+            const data = this;
             
-            lastDonationInterval = setInterval(function() {
+            if (this.$route.query.view !== 'participant') {
+                this.avatarImageURL = this.team.avatarImageURL;
+                this.name = this.team.name;
+                this.resource = this.team;
+                
                 store.dispatch('getLastDonation', {
                     teamID: team.teamID,
                 });
-            }, 15000);
+                
+                lastDonationInterval = setInterval(function() {
+                    store.dispatch('getLastDonation', {
+                        teamID: team.teamID,
+                    });
+                }, 15000);
+            } else {
+                store.dispatch('getLastDonation', {
+                    participantID: data.participant.participantID,
+                });
+                
+                lastDonationInterval = setInterval(function() {
+                    store.dispatch('getLastDonation', {
+                        participantID: data.participant.participantID,
+                    });
+                }, 15000);
+            }
         },
     },
     created() {

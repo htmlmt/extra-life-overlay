@@ -2,7 +2,7 @@
 	<section v-if="resource">
 		<div class="u-mb-sm dd-u-flex dd-u-justify-between">
 			<p>
-				<span v-if="resource.teamID">We've</span><span v-if="resource.participantID">I've</span> raised <strong>{{ resource.sumDonations | formatMoney }}</strong> for {{ resource.eventName }}
+				<span v-if="!resource.displayName">We've</span><span v-if="resource.displayName">I've</span> raised <strong>{{ resource.sumDonations | formatMoney }}</strong> for {{ resource.eventName }}
 			</p>
 			
 			<p v-if="resource.fundraisingGoal">
