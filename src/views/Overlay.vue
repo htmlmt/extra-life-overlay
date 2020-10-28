@@ -1,35 +1,54 @@
 <template>
-    <div class="dd-u-flex dd-u-flex-col dd-u-h-screen dd-u-justify-between">
-        <main class="u-p-sm u-shadow dd-u-bg-white dd-u-relative dd-u-z-10">
-            <Thermo :resource="resource" />
-        </main>
-        
-        <footer class="u-p-sm dd-u-flex dd-u-items-center dd-u-justify-between dd-u-overflow-hidden">
-            <div
-                id="fundraiser"
-                class="u-mr-16 dd-u-flex dd-u-items-center"
-            >
-                <div class="u-mr-16">
-                    <img
-                        :alt="name"
-                        :src="avatarImageURL"
-                    >
-                </div>
-                
-                <p class="dd-u-truncate">
-                    {{ participant.displayName }} <span v-if="team.name">playing for {{ team.name }}</span>
-                </p>
-            </div>
+    <div class="dd-u-flex dd-u-min-h-screen dd-u-items-center dd-u-justify-center">
+        <div
+            class="dd-u-text-center dd-u-w-full"
+            v-if="!participantID"
+        >
+            <p class="u-mb-16 u-text-16">
+                Please update the URL with your participant ID:<br> 
+                https://extralifeoverlay.netlify.app/?participantID=<strong>[your participant ID]</strong>
+            </p>
 
-            <div
-                v-if="lastDonation"
-                class="dd-u-overflow-hidden"
-            >
-                <p class="dd-u-truncate">
-                    <span>{{ lastDonation.displayName }}</span><span v-if="!lastDonation.displayName">Anonymous</span> donated <span v-if="lastDonation.amount"><strong>{{ lastDonation.amount | formatMoney }}</strong></span> <span v-if="lastDonation.recipientName">to {{ lastDonation.recipientName }}</span> {{ lastDonation.createdDateUTC | moment('from') }}
-                </p>
-            </div>
-        </footer>
+            <p class="u-text-16">
+                If you're on a team and want to show only<br> your thermo and most-recent donation,<br> add <strong>&view=participant</strong> to the URL.
+            </p>
+        </div>
+
+        <div
+            v-if="participantID"
+            class="dd-u-flex dd-u-flex-col dd-u-h-screen dd-u-justify-between"
+        >
+            <main class="u-p-sm u-shadow dd-u-bg-white dd-u-relative dd-u-z-10">
+                <Thermo :resource="resource" />
+            </main>
+            
+            <footer class="u-p-sm dd-u-flex dd-u-items-center dd-u-justify-between dd-u-overflow-hidden">
+                <div
+                    id="fundraiser"
+                    class="u-mr-16 dd-u-flex dd-u-items-center"
+                >
+                    <div class="u-mr-16">
+                        <img
+                            :alt="name"
+                            :src="avatarImageURL"
+                        >
+                    </div>
+                    
+                    <p class="dd-u-truncate">
+                        {{ participant.displayName }} <span v-if="team.name">playing for {{ team.name }}</span>
+                    </p>
+                </div>
+
+                <div
+                    v-if="lastDonation"
+                    class="dd-u-overflow-hidden"
+                >
+                    <p class="dd-u-truncate">
+                        <span>{{ lastDonation.displayName }}</span><span v-if="!lastDonation.displayName">Anonymous</span> donated <span v-if="lastDonation.amount"><strong>{{ lastDonation.amount | formatMoney }}</strong></span> <span v-if="lastDonation.recipientName">to {{ lastDonation.recipientName }}</span> {{ lastDonation.createdDateUTC | moment('from') }}
+                    </p>
+                </div>
+            </footer>
+        </div>
     </div>
 </template>
 
@@ -55,7 +74,9 @@ export default {
             avatarImageURL: '',
             lastDonationTime: false,
             name: '',
+            participantName: '',
             resource: {},
+            participantID: '',
             thermoShown: 'team',
         }
     },
@@ -141,18 +162,22 @@ export default {
         
         const params = this.$route.query;
         store = this.$store;
+        
+        if (params.participantID) {
+            this.participantID = params.participantID;
 
-        store.dispatch('getParticipant', {
-            participantID: params.participantID,
-        });
-        
-        const data = this;
-        
-        participantInterval = setInterval(function() {
             store.dispatch('getParticipant', {
-                participantID: data.participant.participantID,
+                name: this.participantName,
             });
-        }, 15000);
+            
+            const data = this;
+            
+            participantInterval = setInterval(function() {
+                store.dispatch('getParticipant', {
+                    participantID: data.participant.participantID,
+                });
+            }, 15000);
+        }
     },
 }
 </script>
@@ -192,8 +217,16 @@ export default {
         box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
     }
     
+    .u-text-16 {
+        font-size: 16px;
+    }
+    
     .u-p-sm {
         padding: 1vw;
+    }
+    
+    .u-max-w-320 {
+        max-width: 320px;
     }
     
     .u-mb-sm {
@@ -202,6 +235,10 @@ export default {
     
     .u-mb-md {
         margin-bottom: 1vw;
+    }
+    
+    .u-mb-16 {
+        margin-bottom: 16px;
     }
     
     .u-mr-16 {
